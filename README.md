@@ -1,19 +1,45 @@
-**This document is incomplete. Do not trust the content in it. This document is
-not offical advice, it is a work in progress**
+# Purity in EVM Code
 
+_This document seeks to define purity in the context of an Ethereum smart
+contract. Based upon this definition it then identifies which opcodes are
+impure and those which are pure or impure depending on their use._
 
-#TODO:
+**This document is a work-in-progress and is not official advice. Errors may be
+present. Collaboration is welcomed.**
 
-Are zksnarks precompiles pure?
+#### TODO:
+
+- Tighten the definition of impurity.
+- Confirm the purity of all precompiles (especially zksnarks).
+- Look further into future impure opcodes.
+
+# Background
+
+The need for this document has come from the requirement for the Casper FFG
+contract (see
+[EIP-1011](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1011.md)) to
+be able to verify signature validation contracts as "pure" so an attacker
+cannot cause a signature validation on a `vote()` transaction to succeed whilst
+simultaneously failing on a `slash()` transaction.
+
+This document is the result of "reverse engineering" the following two
+contracts and the majority of the credit of this document is deserving to
+their authors:
+
+- [Serpent Purity Checker](https://github.com/ethereum/research/blob/master/impurity/check_for_impurity.se) in [ethereum/research](https://github.com/ethereum/research) by "vub". I think the author is Vitalik Buterin, but I am not sure.
+- [LLL Port](https://github.com/ethereum/casper/pull/143/files) of the above
+  Serpent Purity Checker by @ralexstokes.
 
 ## Definition of Impurity
 
 A contract is considered pure if given sufficient gas for execution and the
-same `DATA` field, it will always return the same result.
+same transaction data field, it will always return the same result.
 
-<h3 id="opcode-table">Impure Opcode Table</h3>
+_TODO: Tighten down this definition._
 
-| Opcode Value | Mnemonic | Impurity Category |
+<h2 id="opcode-table">Impure Opcode Table</h2>
+
+| Opcode Value | Mnemonic | Impurity Category | 
 |--|--|--|
 | `0x31` | [BALANCE](#BALANCE) | [Always Impure](#always-impure) |
 |`0x32` | [ORIGIN](#ORIGIN) | [Always Impure](#always-impure) |
@@ -67,7 +93,7 @@ pure or impure, depending on the address specified for the call. The use of a
 call-type opcode can only be considered pure if the address specified is:
 
 - An address that has already been determined to be pure.
-- Any of the precompile addresses within the range of `0x0000000000000000000000000000000000000001` to `0x0000000000000000000000000000000000000008`.
+- Any of the precompile addresses within the range of `0x0000000000000000000000000000000000000001` to `0x0000000000000000000000000000000000000008`. _Note: the purity of these contracts is yet to be confirmed._
 
 See the [Address Detection Techniques](#address-detection) section for
 some techniques for extracting the address supplied to a call-type opcode from
@@ -78,68 +104,123 @@ impure**. This is because it can potentially have impure code deployed to it.
 
 <h2 id="address-detection">Address Detection Techniques</h2>
 
-Detecting the purity of some contract code is likely to be a task done via the
-EVM. With this in mind, a method of extracting the address supplied to some
-call-type opcode by reading the bytecode. First, we define two convenience
-functions:
+Call-type opcodes (see the [table](#opcode-table) for a listing) can only be
+considered pure if they call a specific set of addresses (see [Potentially
+Impure Call-Types](#call-type). Therefore, in order to permit some call-type
+opcodes it is necessary to determine the called address from the bytecode. This
+section describes methods which may be used to find the address supplied to the
+call-type opcode with certainty.
 
-- `get_opcode(n)`: returns the `n`'th opcode declared in the bytecode.
-- `get_last_opcode_param(n)`: returns the final parameter supplied to
-  the `n`th opcode declared in the bytecode. E.g., assume that `bytecode[]` is
-an array of 256 bit words and that `bytecode[0]` is PUSH2. In such a case
-`get_last_opcode_param[0]` would return `bytecode[2]`.
+The code which may place an address on the stack for call-type opcode can be
+arbitrarily complex and only discoverable by executing said code. To allow
+purity checking within a single Ethereum transaction the techniques here are
+simplistic and will provide false positives (indicating impurity). However,
+these techniques should never produce false negatives (indicating purity).
 
-If either of these functions attempt to access an invalid index of the bytecode
-they turn `None`.
+### Convenience Functions
 
-Now we declare five functions using pseudo-code which can be used to return an
-address. If all of these functions return `None` the contract should be
-considered impure as we were unable to ascertain with the address
-supplied to the call-type opcode. Each function takes an input `c` which is the
-index of the call-type opcode in the bytecode (i.e., the parameter that would need to be
-supplied to `get_opcode()` to return the call-type opcode).
+First two convenience functions are declared; `get_opcode(n)` and
+`get_last_opcode_param(n)`.
 
-### Address Detection Function #1
+#### Convenience Function `get_opcode(n)`
+
+Returns the `n`'th opcode declared in the subject `bytecode[]`. 
+
+If `n` is out of bounds of `bytecode[]` the function returns `None`.
+
+Example:
+```python
+ADD = 0x01
+PUSH2 = 0x61
+
+bytecode = [PUSH2, 2, 1, ADD]
+get_opcode(0)
+# 3
+get_opcode(2)
+# None
+```
+
+#### Convenience Function `get_last_opcode_param(n)`
+
+Returns the final parameter supplied to the `n`'th opcode declared in
+the subject `bytecode[]`.
+
+If `n` is out of bounds of `bytecode[]` or the `n`'th opcode does not have
+parameters the function returns `None`.
+
+Example:
+```python
+ADD = 0x01
+PUSH2 = 0x61
+
+bytecode = [PUSH2, 2, 1, ADD]
+get_last_opcode_param(0)
+# 1
+get_last_opcode_param(1)
+# None
+get_last_opcode_param(2)
+# None
+```
+
+### Address Detection Functions
+
+Four functions are now declared which return an address if a specific pattern
+of opcodes is found to precede a call-type opcode. If all of these functions
+return `None`, then the contract should be assumed to be impure.
+
+Each function takes an input `c` which is the index of the call-type opcode in
+question.
+
+#### Address Detection Function #1
 
 ```python
-def address_detector_1(c) -> address:
-    if 0x60 <= get_opcode(n-2) <= 0x7f:
-        return get_last_opcode_param(n-2)
+PUSH1 = 0x60
+PUSH32 = 0x7f
+
+def address_detector_1(c):
+    if PUSH1 <= get_opcode(c-2) <= PUSH32:
+        return get_last_opcode_param(c-2)
     else:
         return None
 ```
 
-### Address Detection Function #2
+#### Address Detection Function #2
 
 ```python
-def address_detector_2(c) -> address:
-    if (get_opcode(n-1) == 0x03 and
-        get_opcode(n-2) == 0x5a and
-        0x60 <= get_opcode(n-3) <= 0x7f):
-        return get_last_opcode_param(n-3)
+SUB = 0x03
+GAS = 0x5a
+PUSH1 = 0x60
+PUSH32 = 0x7f
+
+def address_detector_2(c):
+    if (get_opcode(c-1) == SUB and
+       get_opcode(c-2) == GAS and
+       PUSH1 <= get_opcode(c-3) <= PUSH32):
+        return get_last_opcode_param(c-3)
     else:
         return None
 ```
 
-### Address Detection Function #3
-
-**NOTE: I am almost certain this method is invalid, but it exists in the
-current version of the purity checker. Do not implement this method.**
+#### Address Detection Function #3
 
 ```python
-def address_detector_3(c) -> address:
-    if get_opcode(n-1) == 0x5a:
-        return get_last_opcode_param(n-2)
+GAS = 0x5a
+SWAP1 = 0x90
+
+def address_detector_3(c):
+    if (get_opcode(c-1) == GAS OR
+       get_opcode(c-1) == SWAP1):
+        return get_last_opcode_param(c-2)
     else:
         return None
 ```
 
-### Address Detection Function #4
+#### Address Detection Function #4
 
 ```python
-def address_detector_4(c) -> address:
-    if get_opcode(n-1) == 0x90:
-        return get_last_opcode_param(n-2)
+def address_detector_4(c):
+    if (0x80 <= get_opcode(c-1) <= 0x8f):
+        return get_last_opcode_param(c-2)
     else:
         return None
 ```
@@ -334,7 +415,7 @@ _This opcode has not been implemented at this time of writing._
 **Summary:** Creates a new account given some code and some nonce (as opposed
 to `CREATE` which uses the current account nonce).  
 **References:** [EIP86](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-86.md).  
-**Impurity Reasoning:** XXXX.  
+**Impurity Reasoning:** Mutates state.  
 **Potential Attack:** An attacker could craft a contract which succeeds the
 first time it is called, but fails all other times.    
 

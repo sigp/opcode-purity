@@ -1,13 +1,5 @@
-Title: EVM Opcode Purity: A list.
-Date: 2018-06-08 10:20
-Modified: 2018-06-08 10:20
-Category: Ethereum
-Tags: ethereum, casper, vyper, lll
-Slug: casper-purity-checker
-Authors: Paul Hauner
-header_cover: imgs/purity-checker/python.jpg
-Summary: A list of impure opcodes, with reasoning.
-Status: draft
+
+#TODO:
 
 Are zksnarks precompiles pure?
 

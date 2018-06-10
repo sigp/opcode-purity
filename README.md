@@ -23,8 +23,8 @@ cannot cause a signature validation on a `vote()` transaction to succeed whilst
 simultaneously failing on a `slash()` transaction.
 
 This document is the result of "reverse engineering" the following two
-contracts and the majority of the credit of this document is deserving to
-their authors:
+contracts and the majority any credit attributed to this document is deserving
+of their authors:
 
 - [Serpent Purity Checker](https://github.com/ethereum/research/blob/master/impurity/check_for_impurity.se) in [ethereum/research](https://github.com/ethereum/research) by "vub". I think the author is Vitalik Buterin, but I am not sure.
 - [LLL Port](https://github.com/ethereum/casper/pull/143/files) of the above
@@ -32,8 +32,8 @@ their authors:
 
 ## Definition of Impurity
 
-A contract is considered pure if given sufficient gas for execution and the
-same transaction data field, it will always return the same result.
+A contract is considered pure if it will always return the same result given
+sufficient gas for execution and the same transaction data.
 
 _TODO: Tighten down this definition._
 
@@ -410,7 +410,7 @@ future calls to it to fail.
 
 <h3 id="CREATE2">CREATE2</h3>
 
-_This opcode has not been implemented at this time of writing._
+_This opcode has not been implemented at the time of writing._
 
 **Summary:** Creates a new account given some code and some nonce (as opposed
 to `CREATE` which uses the current account nonce).  

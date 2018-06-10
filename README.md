@@ -78,7 +78,7 @@ These opcodes have no use other than to mutate state, return mutable state or
 provide context about the execution environment. Any contract which includes an
 "always impure" opcode should be immediately considered impure.
 
-<h3 id="always-impure">Future Impure Opcodes</h3>
+<h3 id="future-impure">Future Impure Opcodes</h3>
 
 These opcodes are assumed to be reserved for future impure opcodes.  At
 the time of writing, there is no formal declaration that this is the case and

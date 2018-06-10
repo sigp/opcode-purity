@@ -12,6 +12,7 @@ present. Collaboration is welcomed.**
 - Tighten the definition of impurity.
 - Confirm the purity of all precompiles (especially zksnarks).
 - Look further into future impure opcodes.
+- Add details for call-type opcodes in opcode listings
 
 # Background
 

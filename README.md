@@ -7,10 +7,6 @@ impure and those which are pure or impure depending on their use._
 **This document is a work-in-progress and is not official advice. Errors may be
 present. Collaboration is welcomed.**
 
-#### TODO:
-
-- Add details for call-type opcodes in opcode listings
-
 # Background
 
 This document is the result of "reverse engineering" the following two
@@ -383,6 +379,40 @@ some address.
 **Potential Attack:** An attacker may self-destruct a contract, causing all
 future calls to it to fail.  
 
+<h3 id="CALL">CALL</h3>
+
+**Summary:** Message-calls to some address.  
+**References:** [`py-evm/evm/vm/logic/call.py: Call()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/call.py#L134)  
+**Potential Impurity Reasoning:** Executes code from another account.  
+**Potential Attack:** An attacker may call an impure contract and use its
+return data.  
+
+<h3 id="CALLCODE">CALLCODE</h3>
+
+**Summary:** Execute the code of some other account using the state of this
+account.  
+**References:** [`py-evm/evm/vm/logic/call.py: CallCode()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/call.py#L169)  
+**Potential Impurity Reasoning:** Executes code from another account.  
+**Potential Attack:** An attacker may callcode an impure contract and read or
+mutate state.  
+
+<h3 id="DELEGATECALL">DELEGATECALL</h3>
+
+**Summary:** Execute the code of some other account using the state of this
+account whilst retaining the same values for `sender` and `value`.  
+**References:** [`py-evm/evm/vm/logic/call.py: DelegateCall()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/call.py#L203)  
+**Potential Impurity Reasoning:** Executes code from another account.  
+**Potential Attack:** An attacker may delegate an impure contract and read or
+mutate state.  
+
+<h3 id="STATICCALL">STATICCALL</h3>
+
+**Summary:** Message-calls to some address without persisting state
+modifications.  
+**References:** [`py-evm/evm/vm/logic/call.py: StaticCall()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/call.py#L306)  
+**Potential Impurity Reasoning:** Executes code from another account.  
+**Potential Attack:** An attacker may call an impure contract and use its
+return data.  
 
 <h3 id="CREATE2">CREATE2</h3>
 
@@ -394,4 +424,3 @@ to `CREATE` which uses the current account nonce).
 **Impurity Reasoning:** Reads and mutates state.  
 **Potential Attack:** An attacker could craft a contract which succeeds the
 first time it is called, but fails all other times.    
-

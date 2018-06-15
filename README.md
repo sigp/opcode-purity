@@ -1,4 +1,4 @@
-# Purity in EVM Code
+# Purity in the EVM
 
 _This document seeks to define purity in the context of an Ethereum smart
 contract. Based upon this definition it then identifies which opcodes are

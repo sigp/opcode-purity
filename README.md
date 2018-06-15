@@ -9,11 +9,7 @@ present. Collaboration is welcomed.**
 
 #### TODO:
 
-- Tighten the definition of impurity.
-- Confirm the purity of all precompiles (especially zksnarks).
-- Look further into future impure opcodes.
 - Add details for call-type opcodes in opcode listings
-- Add references to py-evm
 
 # Background
 

@@ -28,9 +28,9 @@ of their authors:
 ## Definition of Impurity
 
 A contract is considered pure if it will always return the same result given
-sufficient gas for execution and the same transaction data.
-
-_TODO: Tighten down this definition._
+sufficient gas for execution and the same transaction data. Specifically, it
+may read the data field of a transaction but no other transaction context, it
+may not read block information and it must not read from or write to storage.
 
 <h2 id="opcode-table">Impure Opcode Table</h2>
 

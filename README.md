@@ -233,21 +233,19 @@ This section contains an opcode-by-opcode listing of each defined opcode. For
 each opcode the following is provided:
 
 - **Summary**: a brief description of what the opcode does.
-- **References**: a link to a resource provides extra detail on the opcode.
-- **Impurity Reasoning**: some reasoning as to why the opcode could be considered
-  to be impure.
+- **Impurity Reasoning**: a reference demonstrating impurity reasoning.
 - **Potential Attack**: a scenario which assumes some attacker has deployed a
-  contract and wishes to be able to have some control (pre-determined or ad
-hoc) of the return result of the contract. This section does not exhaustively
-list potential attacks, it simply provides an example for demonstrative
-purposes.
+  contract and wishes to be able to have some pre-determined or ad hoc control
+of the return result of the contract. This section does not exhaustively list
+potential attacks, it simply provides an example for demonstrative purposes.
+
+Specifications of opcodes can be found in Appendix H of the [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).
 
 <h3 id="BALANCE">BALANCE</h3>
 
 **Summary:** Returns the balance of some address.  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** The balance of an address is mutable state which can
-potentially be modified at any time.  
+**References:** [`py-evm/evm/vm/logic/context.py: balance()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/context.py#L16)  
+**Impurity Reasoning:** reads state.  
 **Potential Attack:** An attacker may influence the return value of a contract
 call by altering the balance of some external account.
 
@@ -255,10 +253,8 @@ call by altering the balance of some external account.
 
 **Summary:** Returns the address of the sender of the transaction which
 triggered execution. In Solidity, this is `tx.origin`.  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** The address derived from a transaction signature is
-variable and not included in the transaction data. Therefore, it can be used to
-give varying results for identical transaction data.  
+**References:** [`py-evm/evm/vm/logic/context.py: origin()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/context.py#L21)  
+**Impurity Reasoning:** reads illegal transaction context.  
 **Potential Attack:** An attacker may influence the return value of a contract
 call by varying the private key with which a transaction is signed.
 
@@ -266,10 +262,8 @@ call by varying the private key with which a transaction is signed.
 
 **Summary:** Returns the address directly responsible for the execution. In
 Solidity, this is `msg.sender`.  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** A contract may return different results depending on
-the caller address, allowing the selection of different results given the same
-transaction data.   
+**References:** [`py-evm/evm/vm/logic/context.py: caller()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/context.py#L29)  
+**Impurity Reasoning:** reads illegal transaction context.  
 **Potential Attack:** An attacker may influence the return value of a contract
 call by varying the private key with which a transaction is signed or using an
 intermediary contract to alter the `CALLER` value.
@@ -278,9 +272,8 @@ intermediary contract to alter the `CALLER` value.
 <h3 id="GASPRICE">GASPRICE</h3>
 
 **Summary:** Returns the current gas price.  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** Gas price is variable and ultimately determined by
-block proposers, therefore it can be considered mutable state.  
+**References:** [`py-evm/evm/vm/logic/context.py: gasprice()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/context.py#L105)  
+**Impurity Reasoning:** reads illegal transaction context.  
 **Potential Attack:** An attacker may influence the return value of a contract
 call by using some means to alter the gas price (e.g., directly controlling
 block proposers).
@@ -289,9 +282,8 @@ block proposers).
 <h3 id="EXTCODESIZE">EXTCODESIZE</h3>
 
 **Summary:** Returns the size of the code held at some address.  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** Code size at an address can be increased from `0` by deploying a
-contract to it.   
+**References:** [`py-evm/evm/vm/logic/context.py: extcodesize()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/context.py#L110)  
+**Impurity Reasoning:** reads state.  
 **Potential Attack:** An attacker may influence the return value of a contract.  
 call by deploying code to some pre-computed address.
 
@@ -300,9 +292,8 @@ call by deploying code to some pre-computed address.
 
 **Summary:** Copies some amount of code at some address to some position in
 memory.  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** The code copied to memory from an address can be varied
-by deploying a contract to it.  
+**References:** [`py-evm/evm/vm/logic/context.py: extcodecopy()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/context.py#L133)  
+**Impurity Reasoning:** reads state.  
 **Potential Attack:** An attacker may influence the return value of a contract
 call by deploying code to some pre-computed address.  
 
@@ -310,9 +301,8 @@ call by deploying code to some pre-computed address.
 
 **Summary:** Returns the hash of some past block (within the previous 256
 complete blocks).  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** Block hashes are ultimately determined by block proposers and
-can therefore be considered mutable state.  
+**References:** [`py-evm/evm/vm/logic/block.py: blockhash()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/block.py#L7)  
+**Impurity Reasoning:** reads state.  
 **Potential Attack:** An attacker may influence the return value of a contract
 call by controlling some portion of block proposers and selecting block hashes based
 upon how they will influence the contract call.  
@@ -320,10 +310,8 @@ upon how they will influence the contract call.
 <h3 id="COINBASE">COINBASE</h3>
 
 **Summary:** Returns the beneficiary address of the block.  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** The coinbase address is determined by block proposers
-and can be considered an input variable not included in transaction
-data.  
+**References:** [`py-evm/evm/vm/logic/block.py: coinbase()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/block.py#L13)  
+**Impurity Reasoning:** reads state.  
 **Potential Attack:** An attacker may influence the return value of a contract
 call by controlling some portion of block proposers and declaring the beneficiary
 address based upon how it will influence the contract call.
@@ -331,10 +319,8 @@ address based upon how it will influence the contract call.
 <h3 id="TIMESTAMP">TIMESTAMP</h3>
 
 **Summary:** Returns the timestamp of the block.  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** The timestamp is determined (within a limited range) by
-block proposers and can be considered an input variable not included
-in transaction data.  
+**References:** [`py-evm/evm/vm/logic/block.py: timestamp()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/block.py#L17)  
+**Impurity Reasoning:** reads state.  
 **Potential Attack:** An attacker may influence the return value of a contract
 call by controlling some portion of block proposers and declaring the timestamp
 based upon how it will influence the contract call.
@@ -343,19 +329,16 @@ based upon how it will influence the contract call.
 
 **Summary:** Returns the number of the block (count of blocks in the chain
 since genesis).  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** Varies block-by-block and can therefore be considered
-an input variable not determined in transaction data.  
+**References:** [`py-evm/evm/vm/logic/block.py: number()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/block.py#L21)  
+**Impurity Reasoning:** reads state.  
 **Potential Attack:** An attacker may influence the return value of a contract
 call by selecting in which block a transaction should be included.
 
 <h3 id="DIFFICULTY">DIFFICULTY</h3>
 
 **Summary:** Returns the block difficulty.  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** The block difficulty is ultimately determined
-collectively by miners and can be considered an input variable not included in
-transaction data.  
+**References:** [`py-evm/evm/vm/logic/block.py: difficulty()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/block.py#L25)  
+**Impurity Reasoning:** reads state.  
 **Potential Attack:** An attacker may influence the return value of a contract
 call by assuming some control of the collective hash rate and modifying it
 based upon how it will influence the contract call.
@@ -363,9 +346,8 @@ based upon how it will influence the contract call.
 <h3 id="GASLIMIT">GASLIMIT</h3>
 
 **Summary:** Returns the block gas limit.  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** The gas limit is ultimately determined by miners and
-can be considered an input variable not included in transaction data.  
+**References** [`py-evm/evm/vm/logic/block.py: gaslimit()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/block.py#L29)  
+**Impurity Reasoning:** reads state.  
 **Potential Attack:** An attacker may influence the return value of a contract
 call by using some means to alter the gas limit (e.g., directly controlling
 block proposers or spamming the network).
@@ -373,8 +355,8 @@ block proposers or spamming the network).
 <h3 id="SLOAD">SLOAD</h3>
 
 **Summary:** Returns a word from storage.  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** Reads mutable state.  
+**References** [`py-evm/evm/vm/logic/storage.py: sload()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/storage.py#L55)  
+**Impurity Reasoning:** reads state.  
 **Potential Attack:** At the time of writing the author is not aware of any
 attack using SLOAD if all other purity directives are followed. However,
 attacks could be imagined if combined with the `SLOAD` opcodes (other
@@ -383,8 +365,8 @@ attacks may be possible).
 <h3 id="SSTORE">SSTORE</h3>
 
 **Summary:** Saves some word to storage.  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** Mutates state.  
+**References:** [`py-evm/evm/vm/logic/storage.py: sstore()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/storage.py#L11)  
+**Impurity Reasoning:** reads and mutates state.  
 **Potential Attack:** At the time of writing the author is not aware of any
 attack using SSTORE if all other purity directives are followed. However,
 attacks could be imagined if combined with the `SSTORE` or `GAS` opcodes (other
@@ -393,8 +375,8 @@ attacks may be possible).
 <h3 id="XXXX">CREATE</h3>
 
 **Summary:** Creates a new account given some code.  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** Mutates state.  
+**References:** [`py-evm/evm/vm/logic/system.py: Create.__call__()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/system.py#L110)  
+**Impurity Reasoning:** reads and mutates state.  
 **Potential Attack:** At the time of writing the author is not aware of any
 attack using CREATE if all other purity directives are followed. However,
 attacks could be imagined if combined with the `EXTCODESIZE` opcode (other
@@ -404,8 +386,8 @@ attacks may be possible).
 
 **Summary:** Registers the account for deletion, sending remaining Ether to
 some address.  
-**References:** [Ethereum Yellow Paper](https://ethereum.github.io/yellowpaper/paper.pdf).  
-**Impurity Reasoning:** Mutates state.  
+**References:** [`py-evm/evm/vm/logic/system.py: _selfdestruct()`](https://github.com/ethereum/py-evm/blob/fa5817b1db12bd61907ac0123fa9ef1a6fb928d1/evm/vm/logic/system.py#L74)  
+**Impurity Reasoning:** reads and mutates state.  
 **Potential Attack:** An attacker may self-destruct a contract, causing all
 future calls to it to fail.  
 
@@ -417,7 +399,7 @@ _This opcode has not been implemented at the time of writing._
 **Summary:** Creates a new account given some code and some nonce (as opposed
 to `CREATE` which uses the current account nonce).  
 **References:** [EIP86](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-86.md).  
-**Impurity Reasoning:** Mutates state.  
+**Impurity Reasoning:** Reads and mutates state.  
 **Potential Attack:** An attacker could craft a contract which succeeds the
 first time it is called, but fails all other times.    
 

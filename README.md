@@ -28,7 +28,7 @@ This document is the result of "reverse engineering" the following two
 contracts and the majority any credit attributed to this document is deserving
 of their authors:
 
-- [Serpent Purity Checker](https://github.com/ethereum/research/blob/master/impurity/check_for_impurity.se) in [ethereum/research](https://github.com/ethereum/research) by "vub". I think the author is Vitalik Buterin, but I am not sure.
+- [Serpent Purity Checker](https://github.com/ethereum/research/blob/master/impurity/check_for_impurity.se) in [ethereum/research](https://github.com/ethereum/research) by Vitalik Buterin.
 - [LLL Port](https://github.com/ethereum/casper/pull/143/files) of the above
   Serpent Purity Checker by @ralexstokes.
 

@@ -1,8 +1,9 @@
 # Purity in the EVM
 
 _This document seeks to define purity in the context of an Ethereum smart
-contract. Based upon this definition it then identifies which opcodes are
-impure and those which are pure or impure depending on their use._
+contract where the transaction data supplied to it in a call is considered the
+"input". Based upon this definition it then identifies which opcodes are impure
+and those which are pure or impure depending on their use._
 
 **This document is a work-in-progress and is not official advice. Errors may be
 present. Collaboration is welcomed.**

@@ -17,13 +17,6 @@ present. Collaboration is welcomed.**
 
 # Background
 
-The need for this document has come from the requirement for the Casper FFG
-contract (see
-[EIP-1011](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1011.md)) to
-be able to verify signature validation contracts as "pure" so an attacker
-cannot cause a signature validation on a `vote()` transaction to succeed whilst
-simultaneously failing on a `slash()` transaction.
-
 This document is the result of "reverse engineering" the following two
 contracts and the majority any credit attributed to this document is deserving
 of their authors:

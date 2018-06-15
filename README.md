@@ -1,3 +1,14 @@
+Title: Purity in the EVM  
+Date: 2018-06-08 10:20  
+Modified: 2018-06-08 10:20  
+Category: Ethereum  
+Tags: ethereum, purity, opcodes  
+Slug: evm-purity  
+Authors: Paul Hauner  
+header_cover: imgs/purity-checker/python.jpg  
+Summary: A definition of purity in the Ethereum EVM.  
+
+
 # Purity in the EVM
 
 _This document seeks to define purity in the context of an Ethereum smart

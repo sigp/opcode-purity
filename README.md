@@ -5,7 +5,7 @@ Category: Ethereum
 Tags: ethereum, purity, opcodes  
 Slug: evm-purity  
 Authors: Paul Hauner  
-header_cover: imgs/purity-checker/python.jpg  
+header_cover: imgs/opcode-purity/header.jpg  
 Summary: A definition of purity in the Ethereum EVM with strategies for detecting purity on-chain.  
 
 

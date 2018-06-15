@@ -213,8 +213,11 @@ def address_detector_3(c):
 #### Address Detection Function #4
 
 ```python
+DUP1 = 0x80
+DUP16 = 0x8f
+
 def address_detector_4(c):
-    if (0x80 <= get_opcode(c-1) <= 0x8f):
+    if (DUP1 <= get_opcode(c-1) <= DUP16):
         return get_last_opcode_param(c-2)
     else:
         return None

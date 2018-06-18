@@ -29,7 +29,7 @@ of their authors:
 
 - [Serpent Purity Checker](https://github.com/ethereum/research/blob/master/impurity/check_for_impurity.se) in [ethereum/research](https://github.com/ethereum/research) by Vitalik Buterin.
 - [LLL Port](https://github.com/ethereum/casper/pull/143/files) of the above
-  Serpent Purity Checker by @ralexstokes.
+  Serpent Purity Checker by [@ralexstokes](https://github.com/ralexstokes).
 
 ## Definition of Impurity
 

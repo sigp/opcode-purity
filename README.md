@@ -107,7 +107,7 @@ impure**. This is because it can potentially have impure code deployed to it.
 
 Call-type opcodes (see the [table](#opcode-table) for a listing) can only be
 considered pure if they call a specific set of addresses (see [Potentially
-Impure Call-Types](#call-type). Therefore, in order to permit some call-type
+Impure Call-Types](#call-type)). Therefore, in order to permit some call-type
 opcodes it is necessary to determine the called address from the bytecode. This
 section describes methods which may be used to find the address supplied to the
 call-type opcode with certainty.

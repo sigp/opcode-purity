@@ -11,17 +11,16 @@ Summary: A definition of purity in the Ethereum EVM with strategies for detectin
 
 # Purity in the EVM
 
-_This document seeks to define purity in the context of an Ethereum smart
-contract where the transaction data supplied to it in a call is considered the
-"input". Based upon this definition it then identifies which opcodes are impure
-and those which are pure or impure depending on their use._
+_This document provides a definition of purity suitable for a signature
+validation contract. It provides resources for designing an on-chain
+purity-checking contract._
 
 **This document is not official advice. Errors may be present.**
 
 This document is available as a Git repository at
 [github.com/sigp/opcode-purity](https://github.com/sigp/opcode-purity).
 
-# Background
+<h2 id="background">Background</h2>
 
 This document is the result of "reverse engineering" the following two
 contracts and the majority any credit attributed to this document is deserving
@@ -31,44 +30,76 @@ of their authors:
 - [LLL Port](https://github.com/ethereum/casper/pull/143/files) of the above
   Serpent Purity Checker by [@ralexstokes](https://github.com/ralexstokes).
 
+Vitalik's contract was ported to LLL by Alex with the intention that it would
+be used to verify the "purity" of signature validation (valsig) contracts in
+the (now deprecated) EIP-1011 proposal.  Before we discuss the concept of
+purity, first we should understand the purpose of valsig contracts.
+
+Valsig contracts were to be used to abstract the signature validation of vote
+and logout messages -- allowing validators to implement arbitrarily complex
+signature schemes instead of just relying upon transaction signatures (ECDSA).
+
+Unfortunately, the use of arbitrary external valsig contracts opens the
+possibility for a damaging attack vector whereby a validator can, because they
+control signature validation, double-vote then prevent punishment by ensuring
+that the slash validation fails whilst the vote validation succeeds. Such an
+attack can be eliminated by reducing the space of possible valsig contracts to
+only those which are "pure": those which will always return the result given
+the same signature to validate.
+
+Therefore, EIP-1011 required that each valsig contract must have its purity
+approved by an on-chain smart contract before it is permitted to be used for
+validation. The contract that scanned and determined valsig contact purity was
+called the _purity checker_ and it is the focus of this document.
+
 ## Definition of Impurity
 
-A contract is considered pure if it will always return the same result given
-sufficient gas for execution and the same transaction data. Specifically, it
-may read the data field of a transaction but no other transaction context, it
-may not read block information and it must not read from or write to storage.
+This contract provides the following definition of purity for an Ethereum
+smart-contract:
 
-<h2 id="opcode-table">Impure Opcode Table</h2>
+_A contract is considered pure if it will always return the same result given
+sufficient gas for execution and the same transaction data and value.
+Specifically, it may read the data and value fields of a transaction but no
+other transaction information, it may not read block information and it must not
+read from or write to storage._
 
-| Opcode Value | Mnemonic | Impurity Category | 
-|--|--|--|
-| `0x31` | [BALANCE](#BALANCE) | [Always Impure](#always-impure) |
-|`0x32` | [ORIGIN](#ORIGIN) | [Always Impure](#always-impure) |
-|`0x33` | [CALLER](#CALLER) | [Always Impure](#always-impure) |
-|`0x3a` | [GASPRICE](#GASPRICE) | [Always Impure](#always-impure) |
-|`0x3b` | [EXTCODESIZE](#EXTCODESIZE) | [Always Impure](#always-impure) |
-|`0x3c` | [EXTCODECOPY](#EXTCODECOPY) | [Always Impure](#always-impure) |
-|`0x40` | [BLOCKHASH](#BLOCKHASH) | [Always Impure](#always-impure) |
-|`0x41` | [COINBASE](#COINBASE) | [Always Impure](#always-impure) |
-|`0x42` | [TIMESTAMP](#TIMESTAMP) | [Always Impure](#always-impure) |
-|`0x43` | [NUMBER](#NUMBER) | [Always Impure](#always-impure) |
-|`0x44` | [DIFFICULTY](#DIFFICULTY) | [Always Impure](#always-impure) |
-|`0x45` | [GASLIMIT](#GASLIMIT) | [Always Impure](#always-impure) |
-|`0x46` - `0x4F` | Range of future impure opcodes | [Future Impure Opcodes](#future-impure)
-|`0x54` | [SLOAD](#SLOAD) | [Always Impure](#always-impure) |
-|`0x55` | [SSTORE](#SSTORE) | [Always Impure](#always-impure) |
-|`0xf0` | [CREATE](#CREATE) | [Always Impure](#always-impure) |
-|`0xff` | [SELFDESTRUCT](#SELFDESTRUCT) | [Always Impure](#always-impure) |
-|`0xf1` | [CALL](CALL) | [Potentially Impure Call-Type](#call-type) |
-|`0xf2` | [CALLCODE](CALLCODE) | [Potentially Impure Call-Type](#call-type) |
-|`0xf4` | [DELEGATECALL](DELEGATECALL) | [Potentially Impure Call-Type](#call-type) |
-|`0xfa` | [STATICCALL](STATICCALL) | [Potentially Impure Call-Type](#call-type) |
-| &ast; `0xfb`  | [CREATE2](#CREATE) | [Always Impure](#always-impure) |
+There is some room for subjectivity in the definition of purity, specifically
+in what can be considered "inputs" to the "function" that is the smart
+contract. This definition includes only transaction data and value ($T_d$,
+$T_v$ in the Yellow Paper) but given no concrete definition of what is
+transaction "context" (as opposed to transaction "input") a definition of
+purity can be conceived which permits the origin address (derived from $T_w$,
+$T_r$ and $T_s$) to be read as well.
 
-_&ast; Opcodes which were not implemented at the time of writing, but the author
-has an expectation they will be implemented in the future._
+## Detecting Impurity On-Chain
 
-## Impurity Categories
+This document assumes that detecting the purity of a contract is going to be
+performed on the contracts bytecode. This is more accurate than performing the
+action on source code because it eliminates any quirks which may be introduced
+during compilation. This also has the benefit that a contract may go and
+retrieve the bytecode of another contract and iterate through it, allowing the
+verification process to take process completely on-chain.
+
+The process of determining the purity of some bytecode will generally involve
+starting at the first byte (which must be an opcode), attempting to match it
+against the opcodes defined in the [table](#opcode-table), performing some
+action depending on the purity of that opcode (e.g., permit, deny or attempt
+address detection) and then repeating the process on the next opcode. 
+
+It is important to note that not each byte in some bytecode must be an opcode,
+instead it may be a parameter supplied to a `PUSH` opcode. The Serpent contract
+provided in the [Background](#background) section provides an example of how
+one can keep track of opcodes and parameters throughout the iteration process
+in order to allow for back-searching of opcodes and parameters as required for
+address detection in call-type opcodes (see [Address Detection
+Techniques](#address-detection)).
+
+The rest of the document focuses on defining the purity categories for each
+opcode, outlining techniques that can be used to deal with call-type opcodes
+and then provides some detail as to why certain opcodes have been
+categorised as pure or potentially-impure.
+
+<h2 id="categories">Impurity Categories</h2>
 
 There are three classifications for impure opcodes: always impure, potentially
 impure call-type and future impure opcodes. Each category is described below.
@@ -103,6 +134,37 @@ bytecode.
 **Any call to an externally-owned (non-contract) address should be considered
 impure**. This is because it can potentially have impure code deployed to it.
 
+
+<h2 id="opcode-table">Impure Opcode Table</h2>
+
+| Opcode Value | Mnemonic | Impurity Category | 
+|--|--|--|
+| `0x31` | [BALANCE](#BALANCE) | [Always Impure](#always-impure) |
+|`0x32` | [ORIGIN](#ORIGIN) | [Always Impure](#always-impure) |
+|`0x33` | [CALLER](#CALLER) | [Always Impure](#always-impure) |
+|`0x3a` | [GASPRICE](#GASPRICE) | [Always Impure](#always-impure) |
+|`0x3b` | [EXTCODESIZE](#EXTCODESIZE) | [Always Impure](#always-impure) |
+|`0x3c` | [EXTCODECOPY](#EXTCODECOPY) | [Always Impure](#always-impure) |
+|`0x40` | [BLOCKHASH](#BLOCKHASH) | [Always Impure](#always-impure) |
+|`0x41` | [COINBASE](#COINBASE) | [Always Impure](#always-impure) |
+|`0x42` | [TIMESTAMP](#TIMESTAMP) | [Always Impure](#always-impure) |
+|`0x43` | [NUMBER](#NUMBER) | [Always Impure](#always-impure) |
+|`0x44` | [DIFFICULTY](#DIFFICULTY) | [Always Impure](#always-impure) |
+|`0x45` | [GASLIMIT](#GASLIMIT) | [Always Impure](#always-impure) |
+|`0x46` - `0x4F` | Range of future impure opcodes | [Future Impure Opcodes](#future-impure)
+|`0x54` | [SLOAD](#SLOAD) | [Always Impure](#always-impure) |
+|`0x55` | [SSTORE](#SSTORE) | [Always Impure](#always-impure) |
+|`0xf0` | [CREATE](#CREATE) | [Always Impure](#always-impure) |
+|`0xff` | [SELFDESTRUCT](#SELFDESTRUCT) | [Always Impure](#always-impure) |
+|`0xf1` | [CALL](CALL) | [Potentially Impure Call-Type](#call-type) |
+|`0xf2` | [CALLCODE](CALLCODE) | [Potentially Impure Call-Type](#call-type) |
+|`0xf4` | [DELEGATECALL](DELEGATECALL) | [Potentially Impure Call-Type](#call-type) |
+|`0xfa` | [STATICCALL](STATICCALL) | [Potentially Impure Call-Type](#call-type) |
+| &ast; `0xfb`  | [CREATE2](#CREATE) | [Always Impure](#always-impure) |
+
+_&ast; Opcodes which were not implemented at the time of writing, but the author
+has an expectation they will be implemented in the future._
+
 <h2 id="address-detection">Address Detection Techniques</h2>
 
 Call-type opcodes (see the [table](#opcode-table) for a listing) can only be
@@ -110,13 +172,17 @@ considered pure if they call a specific set of addresses (see [Potentially
 Impure Call-Types](#call-type)). Therefore, in order to permit some call-type
 opcodes it is necessary to determine the called address from the bytecode. This
 section describes methods which may be used to find the address supplied to the
-call-type opcode with certainty.
+call-type opcode with certainty. 
 
 The code which may place an address on the stack for call-type opcode can be
 arbitrarily complex and only discoverable by executing said code. To allow
 purity checking within a single Ethereum transaction the techniques here are
 simplistic and will provide false positives (indicating impurity). However,
 these techniques should never produce false negatives (indicating purity).
+
+Techniques are provided in a Python-like pseudo-code and concrete examples can
+be found in the two contracts specified in the [Background](#background)
+section.
 
 ### Convenience Functions
 
@@ -170,7 +236,9 @@ of opcodes is found to precede a call-type opcode. If all of these functions
 return `None`, then the contract should be assumed to be impure.
 
 Each function takes an input `c` which is the index of the call-type opcode in
-question.
+question. It is assumed that the on-chain purity checking contract is iterating
+over the bytecode in question and each time it detects a call-type opcode it
+runs these functions to attempt to detect the address being called.
 
 #### Address Detection Function #1
 

@@ -52,7 +52,7 @@ approved by an on-chain smart contract before it is permitted to be used for
 validation. The contract that scanned and determined valsig contact purity was
 called the _purity checker_ and it is the focus of this document.
 
-## Definition of Impurity
+## Definition of Purity
 
 This contract provides the following definition of purity for an Ethereum
 smart-contract:

@@ -69,7 +69,8 @@ contract. This definition includes only transaction data and value ($T_d$,
 $T_v$ in the Yellow Paper) but given no concrete definition of what is
 transaction "context" (as opposed to transaction "input") a definition of
 purity can be conceived which permits the origin address (derived from $T_w$,
-$T_r$ and $T_s$) to be read as well.
+$T_r$ and $T_s$) to be read as well. Such a definition is not compatible with
+signature validation contracts and is therefore excluded from this document.
 
 ## Detecting Impurity On-Chain
 

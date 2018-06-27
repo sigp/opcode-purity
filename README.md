@@ -77,9 +77,9 @@ signature validation contracts and is therefore excluded from this document.
 This document assumes that detecting the purity of a contract is going to be
 performed on the contracts bytecode. This is more accurate than performing the
 action on source code because it eliminates any quirks which may be introduced
-during compilation. This also has the benefit that a contract may go and
-retrieve the bytecode of another contract and iterate through it, allowing the
-verification process to take process completely on-chain.
+during compilation. This also has the benefit of allowing on-chain verification
+of one contract by another as a contract may go and retrieve the bytecode of
+another contract and iterate through it inside the EVM.
 
 The process of determining the purity of some bytecode will generally involve
 starting at the first byte (which must be an opcode), attempting to match it
